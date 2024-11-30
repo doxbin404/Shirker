@@ -109,6 +109,11 @@ export class StartCommand extends Command {
 
 					await ctx.deleteMessage(ctx.session.messageId);
 					await ctx.deleteMessage(ctx.session.messageAuthorId);
+					userData.missedLessons = 0;
+					userData.visitedLessons = 0;
+					userData.settings = [];
+					userData.createdAt = new Date();
+					userData.updatedAt = new Date();
 					const createdUser = await prisma.user.create({ data: userData });
 
 					await ctx.reply(`Привет, ${createdUser.firstName} ${createdUser.middleName}`);

@@ -7,18 +7,108 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum DayOfWeek {
+  Понедельник
+  Вторник
+  Среда
+  Четверг
+  Пятница
+  Суббота
+  Воскресенье
+}
+
+enum TeacherStatus {
+  Ассистент
+  Доцент
+  Профессор
+}
+
+enum WeekType {
+  Оба
+  Четная
+  Нечетная
+}
+
+model Group {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  subgroups Subgroup[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+}
+
+model Subgroup {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  groupId   String     @db.ObjectId
+  group     Group      @relation(fields: [groupId], references: [id])
+  schedule  Schedule[]
+  users     User[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+}
+
+model Schedule {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  dayOfWeek   DayOfWeek
+  startTime   DateTime
+  endTime     DateTime
+  subjectName String
+  teacherId   String    @db.ObjectId
+  teacher     Teacher   @relation("ScheduleToTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  classroom   String
+  weekType    WeekType  @default(Оба)
+  subgroupId  String    @db.ObjectId
+  subgroup    Subgroup  @relation(fields: [subgroupId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+}
+
+model Teacher {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  firstName  String
+  middleName String
+  lastName   String
+  status     TeacherStatus
+  schedule   Schedule[]    @relation("ScheduleToTeacher")
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @default(now())
+}
+
 model User {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  telegramUserId   String   @unique
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  telegramUserId   String        @unique
   telegramUsername String
   firstName        String
   middleName       String
   lastName         String
   phoneNumber      String
   birthday         String
-  missedLessons    Int
-  visitedLessons   Int
-  settings         String[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @default(now())
+  missedLessons    Int           @default(0)
+  visitedLessons   Int           @default(0)
+  settings         Json
+  subgroupId       String?       @db.ObjectId
+  subgroup         Subgroup?     @relation(fields: [subgroupId], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now())
+  BlockedUser      BlockedUser[]
+}
+
+model Admin {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  telegramUserId   String   @unique
+  telegramUsername String
+  createdAt        DateTime? @default(now())
+  updatedAt        DateTime? @default(now())
+}
+
+model BlockedUser {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  reason    String
+  blockedAt DateTime @default(now())
+  blockedBy Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }

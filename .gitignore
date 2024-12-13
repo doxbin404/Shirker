@@ -14,3 +14,6 @@ sessions.json
 
 # visual studio code
 .vscode
+
+# logs
+logs

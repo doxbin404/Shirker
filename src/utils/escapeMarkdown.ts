@@ -1,3 +1,4 @@
 export function escapeMarkdown(text: string): string {
-	return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+	const reservedChars = /([`>#+\-=|{}.!])/g;
+	return text.replace(reservedChars, '\\$1');
 }

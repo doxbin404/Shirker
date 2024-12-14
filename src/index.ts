@@ -5,6 +5,8 @@ import { ConfigService } from './config/config.service.js';
 import { IClientContext } from './context/context.interface.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ServiceBox } from './services/boxService.js';
+import { LoggerService } from './services/loggerService.js';
+import { ILogger } from './interfaces/interfaces.js';
 import LocalSession from 'telegraf-session-local';
 import prisma from './prisma/prisma.js';
 import chalk from 'chalk';
@@ -15,15 +17,17 @@ const IBox = new ServiceBox();
 const BoxContents = IBox.createBox();
 class Client {
 	private boxContents = BoxContents;
+	private logger: ILogger;
 
 	client: Telegraf<IClientContext>;
 	commands: Command[] = [];
 
-	constructor(private readonly configService: IConfigService) {
+	constructor(private readonly configService: IConfigService, logger: ILogger) {
 		this.client = new Telegraf<IClientContext>(this.configService.get('TELEGRAM_BOT_TOKEN'));
 		this.client.use(
 			new LocalSession({ database: 'sessions.json' }).middleware(),
 		);
+		this.logger = logger;
 	}
 
 	public async init() {
@@ -55,6 +59,7 @@ class Client {
 			if (typeof commandClass === 'function' && commandClass.prototype instanceof Command) {
 				this.commands.push(new (commandClass as new (client: Telegraf<IClientContext>) => Command)(this.client));
 				IBox.addItem(this.boxContents, { name: commandClass.name, value: `${chalk.bold.green('Loaded')}` });
+				this.logger.info(`Command ${commandClass.name} loaded`);
 			}
 		}
 	}
@@ -63,13 +68,15 @@ class Client {
 		try {
 			await prisma.$connect();
 			IBox.addItem(this.boxContents, { name: `${chalk.bold.hex('#16A394')('Prisma Client')}`, value: `${chalk.bold.green('Connected')}` });
+			this.logger.info('Prisma Client connected');
 		}
 		catch (error) {
 			console.error(error);
 			IBox.addItem(this.boxContents, { name: `${chalk.bold.hex('#16A394')('Prisma Client')}`, value: `${chalk.bold.red('Error')}` });
+			this.logger.error('Prisma Client connection error', { error });
 		}
 	}
 }
-
-const client = new Client(new ConfigService());
+const logger = new LoggerService();
+const client = new Client(new ConfigService(), logger);
 client.init();

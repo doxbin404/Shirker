@@ -6,6 +6,7 @@ import { LoggerService } from '../services/loggerService.js';
 import { escapeMarkdown } from '../utils/utils.js';
 import { DayOfWeek, WeekType, TeacherStatus } from '@prisma/client';
 
+
 export class AdminMenuCommand extends Command {
 	private adminService: AdminService;
 	private loggerService: LoggerService;
@@ -190,6 +191,7 @@ export class AdminMenuCommand extends Command {
 				return setTimeout(() => ctx.deleteMessage(replyMessage.message_id), 5000);
 			}
 		});
+
 
 		this.client.on('text', async (ctx) => {
 			if (ctx.session.awaitingNewsText) {
